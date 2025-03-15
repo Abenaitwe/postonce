@@ -20,6 +20,9 @@ const NavBar = () => {
           <Link to="/features" className="text-gray-600 hover:text-postbridge-600 transition-colors">
             Features
           </Link>
+          <Link to="/scheduler" className="text-gray-600 hover:text-postbridge-600 transition-colors">
+            Scheduler
+          </Link>
         </nav>
         <div className="flex items-center space-x-3">
           <Button variant="outline" className="hidden md:inline-flex">

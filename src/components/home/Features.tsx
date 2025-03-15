@@ -1,38 +1,38 @@
 
 import React from "react";
 import { Link } from "@/components/ui/link";
-import { Globe, Share2, Users, Zap, PenTool, Smartphone } from "lucide-react";
+import { Globe, Share2, Users, Zap, PenTool, Smartphone, Calendar, Clock } from "lucide-react";
 
 const features = [
   {
-    icon: <Globe className="h-10 w-10 text-postbridge-600" />,
-    title: "One Link For Everything",
-    description: "Share your Post-Bridge link on Instagram, TikTok, Twitter or anywhere else to send followers to all your content."
+    icon: <Calendar className="h-10 w-10 text-postbridge-600" />,
+    title: "Schedule Posts Across Platforms",
+    description: "Create once, share everywhere. Schedule posts to go live on multiple social networks simultaneously."
+  },
+  {
+    icon: <Clock className="h-10 w-10 text-postbridge-600" />,
+    title: "Perfect Timing",
+    description: "Schedule your content for the optimal time when your audience is most active across each platform."
   },
   {
     icon: <Share2 className="h-10 w-10 text-postbridge-600" />,
     title: "Easy Sharing",
-    description: "Simply share your custom Post-Bridge URL anywhere you want to connect with your audience."
+    description: "Simply create your content once and Post-Bridge handles distributing it across Facebook, Instagram, X, LinkedIn, and more."
   },
   {
     icon: <PenTool className="h-10 w-10 text-postbridge-600" />,
     title: "Fully Customizable",
-    description: "Personalize your page with custom themes, fonts, and button styles to match your brand."
+    description: "Personalize your posts with custom text, images, and videos optimized for each platform."
   },
   {
     icon: <Zap className="h-10 w-10 text-postbridge-600" />,
-    title: "Fast & Responsive",
-    description: "Optimized for all devices and built for speed - your audience will love the experience."
-  },
-  {
-    icon: <Users className="h-10 w-10 text-postbridge-600" />,
-    title: "Grow Your Audience",
-    description: "Connect all your social networks in one place to maximize your reach and engagement."
+    title: "Fast & Efficient",
+    description: "Save hours every week by managing all your social media accounts from one dashboard."
   },
   {
     icon: <Smartphone className="h-10 w-10 text-postbridge-600" />,
     title: "Mobile Optimized",
-    description: "Perfect viewing experience across all devices, especially mobile where most social traffic comes from."
+    description: "Schedule posts on the go with our responsive design that works on desktop, tablet, and mobile."
   }
 ];
 
@@ -43,7 +43,7 @@ const Features = () => {
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="mb-4 font-bold text-gray-900">All the features you need</h2>
           <p className="text-xl text-gray-600">
-            Everything you need to connect your audience across different platforms.
+            Everything you need to manage and schedule posts across different platforms.
           </p>
         </div>
         
@@ -58,6 +58,15 @@ const Features = () => {
               <p className="text-gray-600 mb-4">{feature.description}</p>
             </div>
           ))}
+        </div>
+        
+        <div className="text-center mt-12">
+          <Link
+            to="/scheduler"
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-postbridge-600 text-white hover:bg-postbridge-700 transition-colors"
+          >
+            Start Scheduling Now
+          </Link>
         </div>
       </div>
     </section>

@@ -1,9 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
 import { 
   Facebook, 
   Instagram, 
@@ -12,16 +12,12 @@ import {
   Youtube, 
   Github,
 } from "lucide-react";
+import { useSocialAuth } from "@/hooks/use-social-auth";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
-interface ConnectedAccount {
-  id: string;
-  platform: string;
-  username: string;
-  connected: boolean;
-  icon: JSX.Element;
-  profileImage?: string;
-}
-
+// Platform configuration
 interface PlatformConfig {
   name: string;
   icon: JSX.Element;
@@ -78,79 +74,105 @@ const platforms: Record<string, PlatformConfig> = {
 
 const ConnectedAccounts = () => {
   const { toast } = useToast();
-  const [accounts, setAccounts] = useState<ConnectedAccount[]>([
-    {
-      id: "1",
-      platform: "instagram",
-      username: "jackfriks",
-      connected: true,
-      icon: platforms.instagram.icon,
-      profileImage: "https://i.pravatar.cc/150?img=3",
-    },
-    {
-      id: "2",
-      platform: "twitter",
-      username: "jackfriks",
-      connected: true,
-      icon: platforms.twitter.icon,
-      profileImage: "https://i.pravatar.cc/150?img=3",
-    },
-    {
-      id: "3",
-      platform: "twitter",
-      username: "curiousquench",
-      connected: true,
-      icon: platforms.twitter.icon,
-      profileImage: "https://i.pravatar.cc/150?img=4",
-    },
-  ]);
+  const { 
+    accounts, 
+    isLoading, 
+    connect, 
+    disconnect, 
+    handleCallback, 
+    fetchConnectedAccounts 
+  } = useSocialAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [session, setSession] = React.useState(null);
+  const [authAlert, setAuthAlert] = React.useState(false);
+
+  // Check for OAuth callback
+  useEffect(() => {
+    if (location.pathname === "/accounts/callback") {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      const state = params.get("state");
+      const platform = localStorage.getItem("platform");
+      
+      if (code && platform) {
+        // Process the OAuth callback
+        handleCallback(platform as any, code);
+        
+        // Clean up storage
+        localStorage.removeItem("platform");
+        localStorage.removeItem("oauth_state");
+        
+        // Redirect back to the accounts page
+        navigate("/accounts");
+      }
+    }
+  }, [location]);
+
+  // Check for user session and load accounts
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      
+      if (data.session) {
+        fetchConnectedAccounts();
+      } else {
+        setAuthAlert(true);
+      }
+    };
+    
+    checkSession();
+    
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        if (session) {
+          fetchConnectedAccounts();
+          setAuthAlert(false);
+        } else {
+          setAuthAlert(true);
+        }
+      }
+    );
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleConnect = (platform: string) => {
-    // Simulate connection process
-    toast({
-      title: "Connecting to " + platforms[platform].name,
-      description: "Please wait while we connect your account...",
-    });
-
-    // Simulate successful connection after a delay
-    setTimeout(() => {
-      const newAccount: ConnectedAccount = {
-        id: Date.now().toString(),
-        platform,
-        username: "your_username",
-        connected: true,
-        icon: platforms[platform].icon,
-        profileImage: "https://i.pravatar.cc/150?img=" + Math.floor(Math.random() * 10),
-      };
-      
-      setAccounts([...accounts, newAccount]);
-      
+    if (!session) {
       toast({
-        title: "Account connected!",
-        description: `You've successfully connected your ${platforms[platform].name} account.`,
+        title: "Authentication Required",
+        description: "You need to be logged in to connect accounts.",
       });
-    }, 1500);
+      return;
+    }
+    
+    // Store the platform in localStorage for callback handling
+    localStorage.setItem("platform", platform);
+    connect(platform as any);
   };
 
   const handleDisconnect = (accountId: string) => {
-    // Simulate disconnection
-    toast({
-      title: "Disconnecting account",
-      description: "Please wait...",
-    });
-
-    // Remove the account after a delay
-    setTimeout(() => {
-      setAccounts(accounts.filter(account => account.id !== accountId));
-      
-      toast({
-        title: "Account disconnected",
-        description: "Your account has been disconnected successfully.",
-      });
-    }, 1000);
+    disconnect(accountId);
   };
 
   const platformsList = Object.keys(platforms);
+
+  if (authAlert) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Authentication Required</AlertTitle>
+        <AlertDescription>
+          You need to be logged in to connect and manage social media accounts.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
@@ -166,6 +188,7 @@ const ConnectedAccounts = () => {
                 variant="outline" 
                 className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded w-60"
                 onClick={() => handleConnect(platform)}
+                disabled={isLoading}
               >
                 {platforms[platform].connectLabel}
               </Button>
@@ -189,6 +212,7 @@ const ConnectedAccounts = () => {
                     <button 
                       onClick={() => handleDisconnect(account.id)}
                       className="ml-1 text-gray-500 hover:text-red-500"
+                      disabled={isLoading}
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -200,11 +224,13 @@ const ConnectedAccounts = () => {
       </div>
       
       <div className="flex justify-start gap-4 mt-8">
-        <Button variant="outline" className="border border-gray-300">
-          Refresh Instagram
-        </Button>
-        <Button variant="outline" className="border border-gray-300">
-          Refresh Twitter
+        <Button 
+          variant="outline" 
+          className="border border-gray-300"
+          onClick={() => fetchConnectedAccounts()}
+          disabled={isLoading}
+        >
+          Refresh Accounts
         </Button>
       </div>
     </div>

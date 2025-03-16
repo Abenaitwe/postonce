@@ -1,0 +1,177 @@
+
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { platform, code, redirectUri } = await req.json();
+    
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Different handling based on platform
+    let tokenResponse;
+    let profileData;
+    let accessToken;
+    let refreshToken;
+    let expiresAt;
+    let username;
+    let profileImage;
+    
+    switch (platform) {
+      case 'twitter':
+        // Twitter OAuth2 flow
+        const twitterClientId = Deno.env.get("TWITTER_CLIENT_ID");
+        const twitterClientSecret = Deno.env.get("TWITTER_CLIENT_SECRET");
+        
+        if (!twitterClientId || !twitterClientSecret) {
+          throw new Error("Twitter credentials not configured");
+        }
+        
+        // Exchange code for token
+        tokenResponse = await fetch('https://api.twitter.com/2/oauth2/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${btoa(`${twitterClientId}:${twitterClientSecret}`)}`
+          },
+          body: new URLSearchParams({
+            'code': code,
+            'grant_type': 'authorization_code',
+            'redirect_uri': redirectUri,
+            'code_verifier': 'challenge'
+          })
+        });
+        
+        const twitterTokenData = await tokenResponse.json();
+        accessToken = twitterTokenData.access_token;
+        refreshToken = twitterTokenData.refresh_token;
+        expiresAt = new Date(Date.now() + twitterTokenData.expires_in * 1000).toISOString();
+        
+        // Get user profile
+        const twitterUserResponse = await fetch('https://api.twitter.com/2/users/me?user.fields=profile_image_url', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        
+        profileData = await twitterUserResponse.json();
+        username = profileData.data.username;
+        profileImage = profileData.data.profile_image_url;
+        break;
+        
+      case 'instagram':
+        // Instagram (Facebook) OAuth flow
+        const instagramClientId = Deno.env.get("INSTAGRAM_CLIENT_ID");
+        const instagramClientSecret = Deno.env.get("INSTAGRAM_CLIENT_SECRET");
+        
+        if (!instagramClientId || !instagramClientSecret) {
+          throw new Error("Instagram credentials not configured");
+        }
+        
+        // Exchange code for token
+        tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
+          method: 'POST',
+          body: new URLSearchParams({
+            'client_id': instagramClientId,
+            'client_secret': instagramClientSecret,
+            'grant_type': 'authorization_code',
+            'redirect_uri': redirectUri,
+            'code': code
+          })
+        });
+        
+        const instaTokenData = await tokenResponse.json();
+        accessToken = instaTokenData.access_token;
+        const userId = instaTokenData.user_id;
+        
+        // Get user profile
+        const instaUserResponse = await fetch(`https://graph.instagram.com/v13.0/${userId}?fields=username,profile_picture&access_token=${accessToken}`);
+        profileData = await instaUserResponse.json();
+        username = profileData.username;
+        profileImage = profileData.profile_picture;
+        break;
+        
+      // Add more platforms as needed
+      
+      default:
+        throw new Error(`Unsupported platform: ${platform}`);
+    }
+    
+    // Get the user ID from the request's authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Authorization header missing');
+    }
+    
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      throw new Error('Failed to authenticate user');
+    }
+    
+    // Store the connected account
+    const { data, error } = await supabase
+      .from('connected_accounts')
+      .upsert({
+        user_id: user.id,
+        platform,
+        username,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_expires_at: expiresAt,
+        profile_image: profileImage,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id, platform, username'
+      });
+    
+    if (error) {
+      throw error;
+    }
+    
+    return new Response(
+      JSON.stringify({
+        success: true,
+        platform,
+        username,
+        profileImage
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  } catch (error) {
+    console.error('Error connecting social account:', error);
+    
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
+      {
+        status: 400,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  }
+});

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -12,7 +11,7 @@ const Hero = () => {
             Connect your social presence with a single link
           </h1>
           <p className="mb-8 text-xl text-gray-600 leading-relaxed">
-            Post-Bridge gives you a beautiful, customizable link page that helps you connect with your audience across platforms.
+            Post Once gives you a beautiful, customizable link page that helps you connect with your audience across platforms.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button size="lg" className="bg-postbridge-600 hover:bg-postbridge-700">

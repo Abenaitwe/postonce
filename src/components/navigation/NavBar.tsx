@@ -17,7 +17,7 @@ const NavBar = () => {
     <header className="border-b border-gray-100 py-4">
       <div className="container-custom flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
-          <span className="font-bold text-xl text-postbridge-600">Post-Bridge</span>
+          <span className="font-bold text-xl text-postbridge-600">Post Once</span>
         </Link>
         <nav className="hidden md:flex items-center space-x-6">
           <Link to="/" className="text-gray-600 hover:text-postbridge-600 transition-colors">

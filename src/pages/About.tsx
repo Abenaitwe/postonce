@@ -1,4 +1,3 @@
-
 import React from "react";
 import NavBar from "@/components/navigation/NavBar";
 import Footer from "@/components/navigation/Footer";
@@ -12,7 +11,7 @@ const About = () => {
         <section className="py-20 md:py-28">
           <div className="container-custom">
             <div className="max-w-3xl mx-auto text-center mb-16">
-              <h1 className="mb-6 font-bold text-gray-900">About Post-Bridge</h1>
+              <h1 className="mb-6 font-bold text-gray-900">About Post Once</h1>
               <p className="text-xl text-gray-600 leading-relaxed">
                 We're on a mission to help creators connect with their audience across all platforms.
               </p>
@@ -27,11 +26,11 @@ const About = () => {
               
               <div className="prose prose-lg max-w-none">
                 <p>
-                  Founded in 2020, Post-Bridge was created to solve a common problem faced by content creators, influencers, and businesses: how to effectively connect with audiences across multiple social platforms.
+                  Founded in 2020, Post Once was created to solve a common problem faced by content creators, influencers, and businesses: how to effectively connect with audiences across multiple social platforms.
                 </p>
                 
                 <p>
-                  In today's digital landscape, having a presence on multiple platforms is essential, but directing your audience between these platforms can be challenging. That's where Post-Bridge comes in - providing a simple, elegant solution that lets you share all your content with a single link.
+                  In today's digital landscape, having a presence on multiple platforms is essential, but directing your audience between these platforms can be challenging. That's where Post Once comes in - providing a simple, elegant solution that lets you share all your content with a single link.
                 </p>
                 
                 <h2 className="text-2xl font-semibold mt-8 mb-4">Our Mission</h2>
@@ -49,7 +48,7 @@ const About = () => {
                 
                 <h2 className="text-2xl font-semibold mt-8 mb-4">Meet the Team</h2>
                 <p>
-                  Post-Bridge is built by a small team of passionate designers, developers, and creators who understand the challenges of managing a multi-platform presence.
+                  Post Once is built by a small team of passionate designers, developers, and creators who understand the challenges of managing a multi-platform presence.
                 </p>
               </div>
             </div>

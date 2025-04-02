@@ -91,7 +91,7 @@ const AuthPage = () => {
     <div className="container-custom flex flex-col items-center justify-center min-h-screen py-12">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Welcome to Post-Bridge</CardTitle>
+          <CardTitle className="text-2xl text-center">Welcome to Post Once</CardTitle>
           <CardDescription className="text-center">
             Connect and manage all your social media accounts in one place
           </CardDescription>

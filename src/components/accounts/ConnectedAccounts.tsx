@@ -16,6 +16,7 @@ import { useSocialAuth } from "@/hooks/use-social-auth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import FacebookConnect from "@/components/social/FacebookConnect";
 
 // Platform configuration
 interface PlatformConfig {
@@ -175,63 +176,70 @@ const ConnectedAccounts = () => {
   }
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
-      <div className="space-y-6">
-        {platformsList.map(platform => (
-          <div key={platform} className="flex items-center">
-            <div className="w-10 h-10 mr-4 flex items-center justify-center">
-              {platforms[platform].icon}
-            </div>
-            
-            <div className="flex-1">
-              <Button 
-                variant="outline" 
-                className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded w-60"
-                onClick={() => handleConnect(platform)}
-                disabled={isLoading}
-              >
-                {platforms[platform].connectLabel}
-              </Button>
-            </div>
-            
-            <div className="flex flex-wrap gap-2 ml-4">
-              {accounts
-                .filter(account => account.platform === platform)
-                .map(account => (
-                  <div 
-                    key={account.id}
-                    className="flex items-center gap-2 bg-gray-100 rounded-full pl-1 pr-2 py-1"
-                  >
-                    <Avatar className="h-7 w-7">
-                      <AvatarImage src={account.profileImage} />
-                      <AvatarFallback>
-                        {account.username.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">{account.username}</span>
-                    <button 
-                      onClick={() => handleDisconnect(account.id)}
-                      className="ml-1 text-gray-500 hover:text-red-500"
-                      disabled={isLoading}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-8">
+      {/* Direct Facebook Integration */}
+      <FacebookConnect />
       
-      <div className="flex justify-start gap-4 mt-8">
-        <Button 
-          variant="outline" 
-          className="border border-gray-300"
-          onClick={() => fetchConnectedAccounts()}
-          disabled={isLoading}
-        >
-          Refresh Accounts
-        </Button>
+      {/* Regular OAuth Platform Connections */}
+      <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+        <h2 className="text-xl font-semibold mb-6">OAuth Platform Connections</h2>
+        <div className="space-y-6">
+          {platformsList.map(platform => (
+            <div key={platform} className="flex items-center">
+              <div className="w-10 h-10 mr-4 flex items-center justify-center">
+                {platforms[platform].icon}
+              </div>
+              
+              <div className="flex-1">
+                <Button 
+                  variant="outline" 
+                  className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded w-60"
+                  onClick={() => handleConnect(platform)}
+                  disabled={isLoading}
+                >
+                  {platforms[platform].connectLabel}
+                </Button>
+              </div>
+              
+              <div className="flex flex-wrap gap-2 ml-4">
+                {accounts
+                  .filter(account => account.platform === platform)
+                  .map(account => (
+                    <div 
+                      key={account.id}
+                      className="flex items-center gap-2 bg-gray-100 rounded-full pl-1 pr-2 py-1"
+                    >
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={account.profileImage} />
+                        <AvatarFallback>
+                          {account.username.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">{account.username}</span>
+                      <button 
+                        onClick={() => handleDisconnect(account.id)}
+                        className="ml-1 text-gray-500 hover:text-red-500"
+                        disabled={isLoading}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="flex justify-start gap-4 mt-8">
+          <Button 
+            variant="outline" 
+            className="border border-gray-300"
+            onClick={() => fetchConnectedAccounts()}
+            disabled={isLoading}
+          >
+            Refresh Accounts
+          </Button>
+        </div>
       </div>
     </div>
   );

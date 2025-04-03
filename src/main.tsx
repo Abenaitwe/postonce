@@ -6,7 +6,7 @@ import './index.css'
 // Make environment variables available to the Facebook SDK
 window.fbAsyncInit = function() {
   FB.init({
-    appId      : import.meta.env.VITE_FACEBOOK_CLIENT_ID || '',
+    appId      : '990325533241007',
     cookie     : true,
     xfbml      : true,
     version    : 'v16.0'

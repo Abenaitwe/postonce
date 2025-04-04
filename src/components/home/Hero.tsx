@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -7,6 +8,13 @@ const Hero = () => {
     <section className="py-20 md:py-28">
       <div className="container-custom">
         <div className="max-w-3xl mx-auto text-center animate-fade-in">
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/lovable-uploads/285e931b-320d-44ef-b68d-14edf0be1746.png" 
+              alt="Post Once" 
+              className="h-16 w-auto"
+            />
+          </div>
           <h1 className="mb-6 font-bold text-gray-900">
             Connect your social presence with a single link
           </h1>

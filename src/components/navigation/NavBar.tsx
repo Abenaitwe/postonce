@@ -17,6 +17,11 @@ const NavBar = () => {
     <header className="border-b border-gray-100 py-4">
       <div className="container-custom flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
+          <img 
+            src="/lovable-uploads/285e931b-320d-44ef-b68d-14edf0be1746.png" 
+            alt="Post Once" 
+            className="h-8 w-auto" 
+          />
           <span className="font-bold text-xl text-postbridge-600">Post Once</span>
         </Link>
         <nav className="hidden md:flex items-center space-x-6">

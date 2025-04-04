@@ -72,8 +72,8 @@ const PrivacyPolicy = () => {
               If you have any questions about this Privacy Policy, please contact us at:
             </p>
             <p>
-              Email: privacy@postonce.com<br />
-              Address: 123 Social Street, Media City, 94105
+              Email: admin@postonce.pro<br />
+              Address: Maya Nanziga, Kampala, Uganda
             </p>
           </div>
         </div>

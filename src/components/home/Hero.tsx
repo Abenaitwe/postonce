@@ -19,7 +19,7 @@ const Hero = () => {
             Connect your social presence with a single link
           </h1>
           <p className="mb-8 text-xl text-gray-600 leading-relaxed">
-            Post Once gives you a beautiful, customizable link page that helps you connect with your audience across platforms.
+            Post Once allows you to post everything everywhere all at once
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button size="lg" className="bg-postbridge-600 hover:bg-postbridge-700">

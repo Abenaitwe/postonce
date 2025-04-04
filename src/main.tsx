@@ -3,7 +3,7 @@
 declare global {
   interface Window {
     FB: any;
-    fbAsyncInit: Function;
+    fbAsyncInit: any; // Change from Function to any to resolve TS2717 error
   }
 }
 

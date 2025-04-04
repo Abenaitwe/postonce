@@ -72,8 +72,7 @@ const PrivacyPolicy = () => {
               If you have any questions about this Privacy Policy, please contact us at:
             </p>
             <p>
-              Email: admin@postonce.pro<br />
-              Address: Maya Nanziga, Kampala, Uganda
+              Email: admin@postonce.pro
             </p>
           </div>
         </div>

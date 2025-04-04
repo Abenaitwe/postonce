@@ -16,7 +16,7 @@ const Hero = () => {
             />
           </div>
           <h1 className="mb-6 font-bold text-gray-900">
-            Connect your social presence with a single link
+            Connect your social media presence
           </h1>
           <p className="mb-8 text-xl text-gray-600 leading-relaxed">
             Post Once allows you to post everything everywhere all at once

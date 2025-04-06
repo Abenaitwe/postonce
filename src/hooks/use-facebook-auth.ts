@@ -10,10 +10,19 @@ declare global {
   }
 }
 
+// Define the Facebook auth response type
+interface FacebookAuthResponse {
+  accessToken: string;
+  expiresIn: string;
+  signedRequest: string;
+  userID: string;
+}
+
 export function useFacebookAuth() {
   const [isReady, setIsReady] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [profile, setProfile] = useState<any>(null);
+  const [authResponse, setAuthResponse] = useState<FacebookAuthResponse | null>(null);
   const { toast } = useToast();
 
   // Handle status changes from Facebook login
@@ -21,11 +30,14 @@ export function useFacebookAuth() {
     if (response.status === 'connected') {
       // User is logged in and has authorized the app
       setIsLoggedIn(true);
+      // Store the auth response
+      setAuthResponse(response.authResponse);
       fetchUserProfile(response.authResponse.accessToken);
     } else {
       // User is either not logged in or has not authorized the app
       setIsLoggedIn(false);
       setProfile(null);
+      setAuthResponse(null);
     }
   };
 
@@ -99,6 +111,7 @@ export function useFacebookAuth() {
     window.FB.logout(() => {
       setIsLoggedIn(false);
       setProfile(null);
+      setAuthResponse(null);
       toast({
         title: 'Logged Out',
         description: 'Successfully logged out from Facebook.',
@@ -143,6 +156,7 @@ export function useFacebookAuth() {
     isReady,
     isLoggedIn,
     profile,
+    authResponse,
     login,
     logout,
     postToFacebook,

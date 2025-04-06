@@ -16,12 +16,29 @@ export function useFacebookAuth() {
   const [profile, setProfile] = useState<any>(null);
   const { toast } = useToast();
 
+  // Handle status changes from Facebook login
+  const statusChangeCallback = (response: any) => {
+    if (response.status === 'connected') {
+      // User is logged in and has authorized the app
+      setIsLoggedIn(true);
+      fetchUserProfile(response.authResponse.accessToken);
+    } else {
+      // User is either not logged in or has not authorized the app
+      setIsLoggedIn(false);
+      setProfile(null);
+    }
+  };
+
   // Check if the Facebook SDK is loaded and ready
   useEffect(() => {
     const checkFBSDK = () => {
       if (window.FB) {
         setIsReady(true);
-        checkLoginStatus();
+        
+        // Check login status when SDK is ready
+        window.FB.getLoginStatus(function(response: any) {
+          statusChangeCallback(response);
+        });
       } else {
         // Check again in 100ms
         setTimeout(checkFBSDK, 100);
@@ -30,21 +47,6 @@ export function useFacebookAuth() {
 
     checkFBSDK();
   }, []);
-
-  // Check if the user is already logged in
-  const checkLoginStatus = () => {
-    if (!window.FB) return;
-
-    window.FB.getLoginStatus((response: any) => {
-      if (response.status === 'connected') {
-        setIsLoggedIn(true);
-        fetchUserProfile(response.authResponse.accessToken);
-      } else {
-        setIsLoggedIn(false);
-        setProfile(null);
-      }
-    });
-  };
 
   // Get user profile information
   const fetchUserProfile = (accessToken: string) => {
@@ -75,8 +77,7 @@ export function useFacebookAuth() {
 
     window.FB.login((response: any) => {
       if (response.authResponse) {
-        setIsLoggedIn(true);
-        fetchUserProfile(response.authResponse.accessToken);
+        statusChangeCallback(response);
         
         // Return the auth response for potential token storage
         return response.authResponse;

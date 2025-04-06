@@ -14,10 +14,10 @@ import './index.css'
 // Make environment variables available to the Facebook SDK
 window.fbAsyncInit = function() {
   window.FB.init({
-    appId      : '990325533241007',
+    appId      : '1190010669431390',
     cookie     : true,
     xfbml      : true,
-    version    : 'v16.0'
+    version    : 'v19.0'
   });
     
   window.FB.AppEvents.logPageView();   

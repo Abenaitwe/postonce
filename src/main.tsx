@@ -11,16 +11,6 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-// Make environment variables available to the Facebook SDK
-window.fbAsyncInit = function() {
-  window.FB.init({
-    appId      : '1190010669431390',
-    cookie     : true,
-    xfbml      : true,
-    version    : 'v19.0'
-  });
-    
-  window.FB.AppEvents.logPageView();   
-};
+// We don't need to initialize Facebook SDK here anymore since it's loaded via script tag
 
 createRoot(document.getElementById("root")!).render(<App />);

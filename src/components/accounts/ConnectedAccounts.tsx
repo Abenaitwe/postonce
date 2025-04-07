@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -81,7 +82,12 @@ const ConnectedAccounts = () => {
   const navigate = useNavigate();
   const [session, setSession] = React.useState(null);
   const [authAlert, setAuthAlert] = React.useState(false);
-  const { isReady, isLoggedIn, profile, login, logout } = useFacebookAuth();
+  const { isReady, isLoggedIn, profile, login, logout, reinitialize } = useFacebookAuth("4063894667175597");
+
+  // Force Facebook SDK to reinitialize when component mounts
+  useEffect(() => {
+    reinitialize("4063894667175597");
+  }, []);
 
   // Check for OAuth callback
   useEffect(() => {

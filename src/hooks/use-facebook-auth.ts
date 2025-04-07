@@ -28,13 +28,22 @@ export function useFacebookAuth(appId: string = "4063894667175597") {
   const { toast } = useToast();
 
   // Initialize the Facebook SDK
-  useEffect(() => {
-    // Only load if the FB SDK isn't already loaded
-    if (!window.FB) {
+  const initFacebookSDK = (appIdToUse: string) => {
+    // Only reinitialize if FB SDK isn't loaded or we want to change the app ID
+    if (!window.FB || window.fbAppId !== appIdToUse) {
+      // Store the app ID we're using
+      window.fbAppId = appIdToUse;
+      
+      // Clean up any existing FB SDK
+      const existingFbScript = document.getElementById('facebook-jssdk');
+      if (existingFbScript) {
+        existingFbScript.remove();
+      }
+      
       // Define the async init function that will run when SDK is loaded
       window.fbAsyncInit = function() {
         window.FB.init({
-          appId: appId,
+          appId: appIdToUse,
           cookie: true,
           xfbml: true,
           version: 'v19.0'
@@ -49,6 +58,9 @@ export function useFacebookAuth(appId: string = "4063894667175597") {
             setAuthResponse(response.authResponse);
             // Fetch the user's profile
             fetchUserProfile(response.authResponse.accessToken);
+          } else {
+            setIsLoggedIn(false);
+            setAuthResponse(null);
           }
         });
       };
@@ -57,14 +69,31 @@ export function useFacebookAuth(appId: string = "4063894667175597") {
       (function(d, s, id) {
         var js, fjs = d.getElementsByTagName(s)[0];
         if (d.getElementById(id)) return;
-        js = d.createElement(s); js.id = id;
+        js = d.createElement(s) as HTMLScriptElement;
+        js.id = id;
         js.src = "https://connect.facebook.net/en_US/sdk.js";
         fjs.parentNode?.insertBefore(js, fjs);
       }(document, 'script', 'facebook-jssdk'));
     } else {
-      // If SDK is already loaded, just update the state
+      // If SDK is already loaded and app ID is the same, just update the state
       setIsReady(true);
     }
+  };
+  
+  // Force reinitialize the SDK with a new app ID
+  const reinitialize = (newAppId: string) => {
+    setIsReady(false);
+    setIsLoggedIn(false);
+    setProfile(null);
+    setAuthResponse(null);
+    setError(null);
+    
+    initFacebookSDK(newAppId);
+  };
+  
+  // Initialize on first load
+  useEffect(() => {
+    initFacebookSDK(appId);
   }, [appId]);
 
   // Handle status changes from Facebook login
@@ -276,5 +305,13 @@ export function useFacebookAuth(appId: string = "4063894667175597") {
     login,
     logout,
     postToFacebook,
+    reinitialize,
   };
+}
+
+// Add the fbAppId to the window object type
+declare global {
+  interface Window {
+    fbAppId?: string;
+  }
 }

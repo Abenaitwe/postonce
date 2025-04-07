@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useFacebookAuth } from "@/hooks/use-facebook-auth";
@@ -22,9 +23,14 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   appId = "4063894667175597"
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { isReady } = useFacebookAuth(appId);
+  const { isReady, reinitialize } = useFacebookAuth(appId);
   const { toast } = useToast();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Force reinitialize the Facebook SDK with the new App ID when component mounts
+  useEffect(() => {
+    reinitialize(appId);
+  }, [appId]);
 
   // Setup a global callback function that the FB login button can call
   useEffect(() => {

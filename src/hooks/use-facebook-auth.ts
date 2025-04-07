@@ -7,6 +7,7 @@ declare global {
   interface Window {
     FB: any;
     fbAsyncInit: any;
+    checkLoginState: () => void;
   }
 }
 
@@ -58,7 +59,35 @@ export function useFacebookAuth() {
     };
 
     checkFBSDK();
-  }, []);
+
+    // Set up the global checkLoginState function that Facebook will call
+    window.checkLoginState = function() {
+      if (window.FB) {
+        window.FB.getLoginStatus(function(response: any) {
+          statusChangeCallback(response);
+          
+          // Show toast notifications based on response
+          if (response.status === 'connected') {
+            toast({
+              title: "Success",
+              description: "Successfully connected to Facebook!",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Connection Failed",
+              description: "Could not connect to Facebook. Please try again.",
+            });
+          }
+        });
+      }
+    };
+
+    return () => {
+      // Clean up the global function when component unmounts
+      delete window.checkLoginState;
+    };
+  }, [toast]);
 
   // Get user profile information
   const fetchUserProfile = (accessToken: string) => {

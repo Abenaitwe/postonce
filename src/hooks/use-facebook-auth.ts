@@ -19,13 +19,53 @@ interface FacebookAuthResponse {
   userID: string;
 }
 
-export function useFacebookAuth() {
+export function useFacebookAuth(appId: string = "4063894667175597") {
   const [isReady, setIsReady] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [profile, setProfile] = useState<any>(null);
   const [authResponse, setAuthResponse] = useState<FacebookAuthResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Initialize the Facebook SDK
+  useEffect(() => {
+    // Only load if the FB SDK isn't already loaded
+    if (!window.FB) {
+      // Define the async init function that will run when SDK is loaded
+      window.fbAsyncInit = function() {
+        window.FB.init({
+          appId: appId,
+          cookie: true,
+          xfbml: true,
+          version: 'v19.0'
+        });
+        
+        setIsReady(true);
+        
+        // Check login status when SDK is ready
+        window.FB.getLoginStatus(function(response: any) {
+          if (response.status === 'connected') {
+            setIsLoggedIn(true);
+            setAuthResponse(response.authResponse);
+            // Fetch the user's profile
+            fetchUserProfile(response.authResponse.accessToken);
+          }
+        });
+      };
+      
+      // Load the SDK asynchronously
+      (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode?.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+    } else {
+      // If SDK is already loaded, just update the state
+      setIsReady(true);
+    }
+  }, [appId]);
 
   // Handle status changes from Facebook login
   const statusChangeCallback = (response: any) => {

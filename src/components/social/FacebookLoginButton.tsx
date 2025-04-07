@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useFacebookAuth } from "@/hooks/use-facebook-auth";
@@ -11,6 +10,7 @@ interface FacebookLoginButtonProps {
   buttonType?: "login_with" | "continue_with" | "signup_with";
   useCustomTag?: boolean;
   scope?: string;
+  appId?: string;
 }
 
 const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({ 
@@ -18,10 +18,11 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   layout = "rounded", 
   buttonType = "continue_with",
   useCustomTag = false,
-  scope = "public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts"
+  scope = "public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts",
+  appId = "4063894667175597"
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { isReady } = useFacebookAuth();
+  const { isReady } = useFacebookAuth(appId);
   const { toast } = useToast();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 

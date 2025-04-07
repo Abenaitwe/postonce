@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +15,7 @@ import { useSocialAuth } from "@/hooks/use-social-auth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
-import FacebookConnect from "@/components/social/FacebookConnect";
+import { useFacebookAuth } from "@/hooks/use-facebook-auth";
 
 // Platform configuration
 interface PlatformConfig {
@@ -26,11 +25,6 @@ interface PlatformConfig {
 }
 
 const platforms: Record<string, PlatformConfig> = {
-  facebook: {
-    name: "Facebook",
-    icon: <Facebook className="h-6 w-6" />,
-    connectLabel: "Connect Facebook",
-  },
   instagram: {
     name: "Instagram",
     icon: <Instagram className="h-6 w-6" />,
@@ -87,6 +81,7 @@ const ConnectedAccounts = () => {
   const navigate = useNavigate();
   const [session, setSession] = React.useState(null);
   const [authAlert, setAuthAlert] = React.useState(false);
+  const { isReady, isLoggedIn, profile, login, logout } = useFacebookAuth();
 
   // Check for OAuth callback
   useEffect(() => {
@@ -177,8 +172,47 @@ const ConnectedAccounts = () => {
 
   return (
     <div className="space-y-8">
-      {/* Direct Facebook Integration */}
-      <FacebookConnect />
+      {/* Facebook Integration */}
+      <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+        <div className="flex items-center">
+          <div className="w-10 h-10 mr-4 flex items-center justify-center">
+            <Facebook className="h-6 w-6" />
+          </div>
+          
+          <div className="flex-1">
+            {isLoggedIn ? (
+              <div className="flex items-center gap-4">
+                <Avatar className="h-12 w-12">
+                  {profile?.picture?.data?.url && (
+                    <AvatarImage src={profile.picture.data.url} alt={profile.name} />
+                  )}
+                  <AvatarFallback>{profile?.name?.charAt(0) || 'FB'}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">{profile?.name}</p>
+                  <p className="text-sm text-gray-500">{profile?.email}</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-2"
+                    onClick={logout}
+                  >
+                    Disconnect Facebook
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button 
+                className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded w-60"
+                onClick={login}
+                disabled={!isReady}
+              >
+                <Facebook className="mr-2 h-5 w-5" />
+                Connect Facebook
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
       
       {/* Regular OAuth Platform Connections */}
       <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">

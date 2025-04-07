@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,7 +6,7 @@ import { useFacebookAuth } from "@/hooks/use-facebook-auth";
 import FacebookLoginButton from "./FacebookLoginButton";
 
 const FacebookConnect: React.FC = () => {
-  const { isReady, isLoggedIn, profile, logout } = useFacebookAuth();
+  const { isReady, isLoggedIn, profile, logout, login } = useFacebookAuth();
 
   return (
     <div className="flex flex-col gap-4 p-6 bg-white rounded-lg shadow-md border border-gray-200">
@@ -48,23 +47,35 @@ const FacebookConnect: React.FC = () => {
             Connect your Facebook account to post directly from Post Once.
           </p>
           
-          {/* Original custom button */}
           <Button 
             className="bg-blue-600 hover:bg-blue-700 mb-4"
-            onClick={() => {}}
+            onClick={login}
           >
             <Facebook className="mr-2 h-5 w-5" />
             Connect with Facebook (Custom Button)
           </Button>
           
-          {/* Facebook's official login button */}
-          <div className="mt-3">
-            <p className="text-sm text-gray-500 mb-2">Or use Facebook's official login button:</p>
-            <FacebookLoginButton 
-              size="large"
-              layout="rounded"
-              buttonType="continue_with"
-            />
+          <div className="mt-6">
+            <p className="text-sm text-gray-500 mb-2">Facebook's official login options:</p>
+            
+            <div className="space-y-3">
+              <div className="p-3 border border-gray-200 rounded-md">
+                <p className="text-xs text-gray-500 mb-2">Standard XFBML Button:</p>
+                <FacebookLoginButton 
+                  size="large"
+                  layout="rounded"
+                  buttonType="continue_with"
+                />
+              </div>
+              
+              <div className="p-3 border border-gray-200 rounded-md">
+                <p className="text-xs text-gray-500 mb-2">Custom Tag with onLogin Callback:</p>
+                <FacebookLoginButton 
+                  useCustomTag={true}
+                  scope="public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts"
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}

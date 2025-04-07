@@ -19,98 +19,13 @@ interface FacebookAuthResponse {
   userID: string;
 }
 
-export function useFacebookAuth(appId: string = "4063894667175597") {
+export function useFacebookAuth() {
   const [isReady, setIsReady] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [profile, setProfile] = useState<any>(null);
   const [authResponse, setAuthResponse] = useState<FacebookAuthResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  // Initialize the Facebook SDK
-  const initFacebookSDK = (appIdToUse: string) => {
-    // Only reinitialize if FB SDK isn't loaded or we want to change the app ID
-    if (!window.FB || window.fbAppId !== appIdToUse) {
-      // Store the app ID we're using
-      window.fbAppId = appIdToUse;
-      
-      // Clean up any existing FB SDK
-      const existingFbScript = document.getElementById('facebook-jssdk');
-      if (existingFbScript) {
-        existingFbScript.remove();
-      }
-      
-      // Define the async init function that will run when SDK is loaded
-      window.fbAsyncInit = function() {
-        window.FB.init({
-          appId: appIdToUse,
-          cookie: true,
-          xfbml: true,
-          version: 'v19.0'
-        });
-        
-        setIsReady(true);
-        
-        // Check login status when SDK is ready
-        window.FB.getLoginStatus(function(response: any) {
-          if (response.status === 'connected') {
-            setIsLoggedIn(true);
-            setAuthResponse(response.authResponse);
-            // Fetch the user's profile
-            fetchUserProfile(response.authResponse.accessToken);
-          } else {
-            setIsLoggedIn(false);
-            setAuthResponse(null);
-          }
-        });
-      };
-      
-      // Load the SDK asynchronously
-      (function(d, s, id) {
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
-        js = d.createElement(s) as HTMLScriptElement;
-        js.id = id;
-        js.src = "https://connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode?.insertBefore(js, fjs);
-      }(document, 'script', 'facebook-jssdk'));
-    } else {
-      // If SDK is already loaded and app ID is the same, just update the state
-      setIsReady(true);
-    }
-  };
-  
-  // Force reinitialize the SDK with a new app ID
-  const reinitialize = (newAppId: string) => {
-    setIsReady(false);
-    setIsLoggedIn(false);
-    setProfile(null);
-    setAuthResponse(null);
-    setError(null);
-    
-    initFacebookSDK(newAppId);
-  };
-  
-  // Initialize on first load
-  useEffect(() => {
-    initFacebookSDK(appId);
-  }, [appId]);
-
-  // Handle status changes from Facebook login
-  const statusChangeCallback = (response: any) => {
-    if (response.status === 'connected') {
-      // User is logged in and has authorized the app
-      setIsLoggedIn(true);
-      // Store the auth response
-      setAuthResponse(response.authResponse);
-      fetchUserProfile(response.authResponse.accessToken);
-    } else {
-      // User is either not logged in or has not authorized the app
-      setIsLoggedIn(false);
-      setProfile(null);
-      setAuthResponse(null);
-    }
-  };
 
   // Check if the Facebook SDK is loaded and ready
   useEffect(() => {
@@ -138,44 +53,23 @@ export function useFacebookAuth(appId: string = "4063894667175597") {
     };
 
     checkFBSDK();
+  }, []);
 
-    // Set up the global checkLoginState function that Facebook will call
-    window.checkLoginState = function() {
-      if (window.FB) {
-        try {
-          window.FB.getLoginStatus(function(response: any) {
-            statusChangeCallback(response);
-            
-            // Show toast notifications based on response
-            if (response.status === 'connected') {
-              toast({
-                title: "Success",
-                description: "Successfully connected to Facebook!",
-              });
-            } else {
-              toast({
-                variant: "destructive",
-                title: "Connection Failed",
-                description: "Could not connect to Facebook. Please try again.",
-              });
-            }
-          });
-        } catch (err) {
-          console.error("Facebook SDK getLoginStatus error:", err);
-          toast({
-            variant: "destructive",
-            title: "Facebook SDK Error",
-            description: "There was an error with the Facebook SDK. Your domain may not be whitelisted.",
-          });
-        }
-      }
-    };
-
-    return () => {
-      // Clean up the global function when component unmounts
-      delete window.checkLoginState;
-    };
-  }, [toast]);
+  // Handle status changes from Facebook login
+  const statusChangeCallback = (response: any) => {
+    if (response.status === 'connected') {
+      // User is logged in and has authorized the app
+      setIsLoggedIn(true);
+      // Store the auth response
+      setAuthResponse(response.authResponse);
+      fetchUserProfile(response.authResponse.accessToken);
+    } else {
+      // User is either not logged in or has not authorized the app
+      setIsLoggedIn(false);
+      setProfile(null);
+      setAuthResponse(null);
+    }
+  };
 
   // Get user profile information
   const fetchUserProfile = (accessToken: string) => {
@@ -305,13 +199,5 @@ export function useFacebookAuth(appId: string = "4063894667175597") {
     login,
     logout,
     postToFacebook,
-    reinitialize,
   };
-}
-
-// Add the fbAppId to the window object type
-declare global {
-  interface Window {
-    fbAppId?: string;
-  }
 }

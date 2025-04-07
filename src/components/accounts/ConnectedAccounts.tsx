@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -48,22 +47,22 @@ const platforms: Record<string, PlatformConfig> = {
   },
   bluesky: {
     name: "Bluesky",
-    icon: <Github className="h-6 w-6" />, // Using Github as placeholder for Bluesky
+    icon: <Github className="h-6 w-6" />,
     connectLabel: "Connect Bluesky",
   },
   threads: {
     name: "Threads",
-    icon: <Instagram className="h-6 w-6" />, // Using Instagram as placeholder for Threads
+    icon: <Instagram className="h-6 w-6" />,
     connectLabel: "Connect Threads",
   },
   tiktok: {
     name: "TikTok",
-    icon: <Github className="h-6 w-6" />, // Using Github as placeholder for TikTok
+    icon: <Github className="h-6 w-6" />,
     connectLabel: "Connect TikTok",
   },
   pinterest: {
     name: "Pinterest",
-    icon: <Github className="h-6 w-6" />, // Using Github as placeholder for Pinterest
+    icon: <Github className="h-6 w-6" />,
     connectLabel: "Connect Pinterest",
   },
 };
@@ -82,12 +81,7 @@ const ConnectedAccounts = () => {
   const navigate = useNavigate();
   const [session, setSession] = React.useState(null);
   const [authAlert, setAuthAlert] = React.useState(false);
-  const { isReady, isLoggedIn, profile, login, logout, reinitialize } = useFacebookAuth("4063894667175597");
-
-  // Force Facebook SDK to reinitialize when component mounts
-  useEffect(() => {
-    reinitialize("4063894667175597");
-  }, []);
+  const { isReady, isLoggedIn, profile, login, logout } = useFacebookAuth();
 
   // Check for OAuth callback
   useEffect(() => {

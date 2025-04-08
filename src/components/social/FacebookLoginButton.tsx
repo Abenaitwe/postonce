@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useFacebookAuth } from "@/hooks/use-facebook-auth";
@@ -19,7 +20,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   buttonType = "continue_with",
   useCustomTag = false,
   scope = "public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts",
-  appId = "4063894667175597"
+  appId = "1006135271061769"
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { isReady, isLoggedIn, login, logout } = useFacebookAuth();

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -202,7 +203,7 @@ const ConnectedAccounts = () => {
               </div>
             ) : (
               <Button 
-                className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded w-60"
+                className="bg-[#1877F2] text-white hover:bg-[#166FE5] px-4 py-2 rounded w-60"
                 onClick={login}
                 disabled={!isReady}
               >

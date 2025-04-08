@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0";
 
@@ -80,6 +81,8 @@ serve(async (req) => {
           throw new Error("Instagram client secret not configured");
         }
         
+        console.log("Starting Instagram OAuth flow with code:", code);
+        
         // Exchange code for token
         tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
           method: 'POST',
@@ -93,6 +96,7 @@ serve(async (req) => {
         });
         
         const instaTokenData = await tokenResponse.json();
+        console.log("Instagram token response:", instaTokenData);
         
         if (instaTokenData.error) {
           console.error('Instagram token error:', instaTokenData);
@@ -102,9 +106,13 @@ serve(async (req) => {
         accessToken = instaTokenData.access_token;
         const userId = instaTokenData.user_id;
         
-        // Get user profile
-        const instaUserResponse = await fetch(`https://graph.instagram.com/v13.0/${userId}?fields=username,profile_picture&access_token=${accessToken}`);
+        console.log("Instagram access token obtained for user ID:", userId);
+        
+        // Get user profile with the long-lived token
+        const instaUserResponse = await fetch(`https://graph.instagram.com/v13.0/${userId}?fields=username,account_type&access_token=${accessToken}`);
         profileData = await instaUserResponse.json();
+        
+        console.log("Instagram user profile:", profileData);
         
         if (profileData.error) {
           console.error('Instagram profile error:', profileData);
@@ -112,7 +120,8 @@ serve(async (req) => {
         }
         
         username = profileData.username;
-        profileImage = profileData.profile_picture || 'https://www.instagram.com/static/images/ico/favicon.ico/36b3ee2d91ed.ico';
+        // Instagram doesn't provide profile picture in basic API, use default
+        profileImage = `https://ui-avatars.com/api/?name=${username}&background=random`;
         break;
         
       // Add more platforms as needed
@@ -134,6 +143,8 @@ serve(async (req) => {
       throw new Error('Failed to authenticate user');
     }
     
+    console.log(`Storing ${platform} account for user ${user.id}, username: ${username}`);
+    
     // Store the connected account
     const { data, error } = await supabase
       .from('connected_accounts')
@@ -151,6 +162,7 @@ serve(async (req) => {
       });
     
     if (error) {
+      console.error('Error storing connected account:', error);
       throw error;
     }
     

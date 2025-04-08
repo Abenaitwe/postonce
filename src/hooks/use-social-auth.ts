@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,7 +28,7 @@ const platformConfig: Record<SocialPlatform, {
   instagram: {
     authUrl: 'https://www.instagram.com/oauth/authorize',
     clientId: '1130965872361777',
-    scope: 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights',
+    scope: 'user_profile,user_media',
     responseType: 'code',
   },
   linkedin: {
@@ -138,6 +139,7 @@ export function useSocialAuth() {
       // Generate state and store it for verification
       const state = generateRandomString(16);
       localStorage.setItem('oauth_state', state);
+      localStorage.setItem('platform', platform);
       
       // Create redirect URI, ensuring it's an absolute URL
       const redirectUri = window.location.origin + '/accounts/callback';
@@ -165,6 +167,7 @@ export function useSocialAuth() {
       }
       
       // Redirect to authorization URL
+      console.log(`Redirecting to ${platform} auth URL:`, url.toString());
       window.location.href = url.toString();
     } catch (error) {
       console.error(`Error connecting to ${platform}`, error);
@@ -179,6 +182,7 @@ export function useSocialAuth() {
   const handleCallback = async (platform: SocialPlatform, code: string) => {
     try {
       setIsLoading(true);
+      console.log(`Processing ${platform} callback with code`, code);
       
       // Verify state parameter (not implemented here for brevity)
       
@@ -198,6 +202,8 @@ export function useSocialAuth() {
           Authorization: `Bearer ${sessionData.session.access_token}`
         }
       });
+      
+      console.log(`${platform} edge function response:`, response);
       
       if (!response.data.success) {
         throw new Error(response.data.error || `Failed to connect ${platform} account`);

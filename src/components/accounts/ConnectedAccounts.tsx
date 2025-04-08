@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +13,7 @@ import {
   Github,
 } from "lucide-react";
 import { useSocialAuth } from "@/hooks/use-social-auth";
+import { SocialPlatform } from "@/types/social-auth-types";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,7 +108,7 @@ const ConnectedAccounts = () => {
       const platform = localStorage.getItem("platform");
       
       if (code && platform) {
-        handleCallback(platform as any, code);
+        handleCallback(platform as SocialPlatform, code);
         
         localStorage.removeItem("platform");
         localStorage.removeItem("oauth_state");

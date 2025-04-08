@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -26,11 +26,13 @@ const ConnectedAccounts = () => {
   } = useSocialAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [session, setSession] = React.useState(null);
-  const [authAlert, setAuthAlert] = React.useState(false);
+  const [session, setSession] = useState(null);
+  const [authAlert, setAuthAlert] = useState(false);
   const { isReady, isLoggedIn, profile, login, logout } = useFacebookAuth();
-  const [callbackProcessed, setCallbackProcessed] = React.useState(false);
+  const [callbackProcessed, setCallbackProcessed] = useState(false);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
 
+  // Process callback parameters
   useEffect(() => {
     if (location.pathname === "/accounts/callback" && !callbackProcessed) {
       setCallbackProcessed(true); // Prevent multiple processing
@@ -81,25 +83,37 @@ const ConnectedAccounts = () => {
     }
   }, [location, handleCallback, navigate, toast, callbackProcessed]);
 
+  // Check session and fetch accounts only once
   useEffect(() => {
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      
-      if (data.session) {
-        fetchConnectedAccounts();
-      } else {
-        setAuthAlert(true);
+      try {
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session);
+        
+        if (data.session) {
+          if (!hasAttemptedFetch) {
+            setHasAttemptedFetch(true);
+            await fetchConnectedAccounts();
+          }
+          setAuthAlert(false);
+        } else {
+          setAuthAlert(true);
+        }
+      } catch (err) {
+        console.error("Error checking session:", err);
       }
     };
     
     checkSession();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         if (session) {
-          fetchConnectedAccounts();
+          if (!hasAttemptedFetch) {
+            setHasAttemptedFetch(true);
+            await fetchConnectedAccounts();
+          }
           setAuthAlert(false);
         } else {
           setAuthAlert(true);
@@ -110,7 +124,7 @@ const ConnectedAccounts = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [fetchConnectedAccounts]);
+  }, [hasAttemptedFetch]);
 
   const handleConnect = (platform: string) => {
     if (!session) {
@@ -149,8 +163,8 @@ const ConnectedAccounts = () => {
       <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
         <h2 className="text-xl font-semibold mb-6">Connected Accounts</h2>
         
-        {/* Display any errors */}
-        {error && (
+        {/* Only display persistent errors, not connection errors that may flicker */}
+        {error && error !== "Failed to load connected accounts" && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Connection Error</AlertTitle>
@@ -180,7 +194,10 @@ const ConnectedAccounts = () => {
           <Button 
             variant="outline" 
             className="border border-gray-300"
-            onClick={() => fetchConnectedAccounts()}
+            onClick={() => {
+              setHasAttemptedFetch(true);
+              fetchConnectedAccounts();
+            }}
             disabled={isLoading}
           >
             Refresh Accounts

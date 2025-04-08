@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { SocialPlatform, ConnectedAccount } from '@/types/social-auth-types';
@@ -11,9 +11,10 @@ export function useSocialAuth() {
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   // Initialize - fetch user's connected accounts
-  const fetchConnectedAccounts = async () => {
+  const fetchConnectedAccounts = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -33,17 +34,23 @@ export function useSocialAuth() {
       }));
       
       setAccounts(connectedAccounts);
+      setIsFirstLoad(false);
     } catch (error) {
       console.error('Error fetching connected accounts', error);
-      setError('Failed to load connected accounts');
-      toast({
-        title: 'Error',
-        description: 'Failed to load your connected accounts.',
-      });
+      
+      // Only show error toast on first load or explicit refresh actions
+      if (isFirstLoad) {
+        setError('Failed to load connected accounts');
+        toast({
+          title: 'Error',
+          description: 'Failed to load your connected accounts. Please try again later.',
+        });
+        setIsFirstLoad(false);
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast, isFirstLoad]);
 
   // Connect to a social platform
   const connect = async (platform: SocialPlatform) => {

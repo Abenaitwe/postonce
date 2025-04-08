@@ -9,12 +9,14 @@ import { generateRandomString } from '@/utils/social-auth-utils';
 export function useSocialAuth() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Initialize - fetch user's connected accounts
   const fetchConnectedAccounts = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       
       const { data, error } = await supabase
         .from('connected_accounts')
@@ -33,6 +35,7 @@ export function useSocialAuth() {
       setAccounts(connectedAccounts);
     } catch (error) {
       console.error('Error fetching connected accounts', error);
+      setError('Failed to load connected accounts');
       toast({
         title: 'Error',
         description: 'Failed to load your connected accounts.',
@@ -45,6 +48,7 @@ export function useSocialAuth() {
   // Connect to a social platform
   const connect = async (platform: SocialPlatform) => {
     try {
+      setError(null);
       // First check if the platform is properly configured
       const config = platformConfig[platform];
       if (!config.clientId) {
@@ -62,6 +66,7 @@ export function useSocialAuth() {
       
       // Create redirect URI, ensuring it's an absolute URL
       const redirectUri = window.location.origin + '/accounts/callback';
+      console.log(`Connecting to ${platform} with redirect URI: ${redirectUri}`);
       
       // Build the URL
       const url = new URL(config.authUrl);
@@ -71,18 +76,11 @@ export function useSocialAuth() {
       url.searchParams.append('scope', config.scope);
       url.searchParams.append('response_type', config.responseType);
       
-      // For Twitter, add PKCE challenge
-      if (platform === 'twitter') {
-        // In a real implementation, you would generate a proper code challenge
-        // For simplicity, we're using a fixed value here
-        url.searchParams.append('code_challenge', 'challenge');
-        url.searchParams.append('code_challenge_method', 'plain');
-      }
-      
-      // For Instagram, disable Facebook login and force authentication
+      // Special handling for Instagram
       if (platform === 'instagram') {
-        url.searchParams.append('enable_fb_login', '0');
-        url.searchParams.append('force_authentication', '1');
+        // These parameters are important for Instagram
+        url.searchParams.delete('enable_fb_login'); // Don't include this parameter
+        url.searchParams.delete('force_authentication'); // Don't include this parameter
       }
       
       // Redirect to authorization URL
@@ -90,6 +88,7 @@ export function useSocialAuth() {
       window.location.href = url.toString();
     } catch (error) {
       console.error(`Error connecting to ${platform}`, error);
+      setError(`Failed to connect to ${platform}`);
       toast({
         title: 'Connection Failed',
         description: `Failed to connect to ${platform}.`,
@@ -101,7 +100,8 @@ export function useSocialAuth() {
   const handleCallback = async (platform: SocialPlatform, code: string) => {
     try {
       setIsLoading(true);
-      console.log(`Processing ${platform} callback with code`, code);
+      setError(null);
+      console.log(`Processing ${platform} callback with code: ${code.substring(0, 10)}...`);
       
       // Verify state parameter (not implemented here for brevity)
       
@@ -111,11 +111,14 @@ export function useSocialAuth() {
         throw new Error('You must be logged in to connect accounts');
       }
       
+      const redirectUri = window.location.origin + '/accounts/callback';
+      console.log(`Using redirect URI for edge function: ${redirectUri}`);
+      
       const response = await supabase.functions.invoke('social-auth', {
         body: {
           platform,
           code,
-          redirectUri: window.location.origin + '/accounts/callback'
+          redirectUri
         },
         headers: {
           Authorization: `Bearer ${sessionData.session.access_token}`
@@ -138,6 +141,7 @@ export function useSocialAuth() {
       await fetchConnectedAccounts();
     } catch (error) {
       console.error('Error handling OAuth callback', error);
+      setError(error.message || `Failed to complete ${platform} connection`);
       toast({
         title: 'Connection Failed',
         description: error.message || `Failed to complete ${platform} connection.`,
@@ -151,6 +155,7 @@ export function useSocialAuth() {
   const disconnect = async (accountId: string) => {
     try {
       setIsLoading(true);
+      setError(null);
       
       const { error } = await supabase
         .from('connected_accounts')
@@ -168,6 +173,7 @@ export function useSocialAuth() {
       });
     } catch (error) {
       console.error('Error disconnecting account', error);
+      setError('Failed to disconnect account');
       toast({
         title: 'Disconnection Failed',
         description: 'Failed to disconnect the account.',
@@ -180,6 +186,7 @@ export function useSocialAuth() {
   return {
     isLoading,
     accounts,
+    error,
     connect,
     disconnect,
     handleCallback,

@@ -16,9 +16,9 @@ export const platformConfig: Record<SocialPlatform, PlatformConfig> = {
     responseType: 'code',
   },
   instagram: {
-    authUrl: 'https://www.instagram.com/oauth/authorize',
+    authUrl: 'https://api.instagram.com/oauth/authorize',
     clientId: '1130965872361777',
-    scope: 'user_profile,user_media',
+    scope: 'user_profile',  // Simplified scope - user_profile is enough for basic access
     responseType: 'code',
   },
   linkedin: {

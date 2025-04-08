@@ -15,6 +15,8 @@ serve(async (req) => {
 
   try {
     const { platform, code, redirectUri } = await req.json();
+    console.log(`Processing ${platform} OAuth callback with code ${code ? 'provided' : 'missing'}`);
+    console.log(`Redirect URI: ${redirectUri}`);
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -81,47 +83,77 @@ serve(async (req) => {
           throw new Error("Instagram client secret not configured");
         }
         
-        console.log("Starting Instagram OAuth flow with code:", code);
+        console.log("Starting Instagram OAuth flow with code:", code ? "provided" : "missing");
+        console.log("Instagram client ID:", instagramClientId);
+        console.log("Instagram client secret configured:", instagramClientSecret ? "Yes" : "No");
         
-        // Exchange code for token
-        tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
-          method: 'POST',
-          body: new URLSearchParams({
-            'client_id': instagramClientId,
-            'client_secret': instagramClientSecret,
-            'grant_type': 'authorization_code',
-            'redirect_uri': redirectUri,
-            'code': code
-          })
+        const tokenUrl = 'https://api.instagram.com/oauth/access_token';
+        console.log("Token URL:", tokenUrl);
+        
+        const tokenParams = new URLSearchParams({
+          'client_id': instagramClientId,
+          'client_secret': instagramClientSecret,
+          'grant_type': 'authorization_code',
+          'redirect_uri': redirectUri,
+          'code': code
         });
+        console.log("Token params:", Object.fromEntries(tokenParams.entries()));
         
-        const instaTokenData = await tokenResponse.json();
-        console.log("Instagram token response:", instaTokenData);
-        
-        if (instaTokenData.error) {
-          console.error('Instagram token error:', instaTokenData);
-          throw new Error(instaTokenData.error_message || 'Failed to get Instagram token');
+        try {
+          // Exchange code for token
+          tokenResponse = await fetch(tokenUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: tokenParams
+          });
+          
+          const responseStatus = tokenResponse.status;
+          const responseContentType = tokenResponse.headers.get('content-type');
+          console.log(`Instagram token response: Status ${responseStatus}, Content-Type: ${responseContentType}`);
+          
+          const responseText = await tokenResponse.text();
+          console.log("Raw Instagram response:", responseText);
+          
+          try {
+            const instaTokenData = JSON.parse(responseText);
+            console.log("Instagram token data:", instaTokenData);
+            
+            if (instaTokenData.error) {
+              console.error('Instagram token error:', instaTokenData);
+              throw new Error(instaTokenData.error_message || 'Failed to get Instagram token');
+            }
+            
+            accessToken = instaTokenData.access_token;
+            const userId = instaTokenData.user_id;
+            
+            console.log("Instagram access token obtained for user ID:", userId);
+            
+            // Get user profile with the access token
+            const instaUserResponse = await fetch(
+              `https://graph.instagram.com/v13.0/${userId}?fields=username,account_type&access_token=${accessToken}`
+            );
+            
+            profileData = await instaUserResponse.json();
+            console.log("Instagram user profile:", profileData);
+            
+            if (profileData.error) {
+              console.error('Instagram profile error:', profileData);
+              throw new Error(profileData.error.message || 'Failed to get Instagram profile');
+            }
+            
+            username = profileData.username;
+            // Instagram doesn't provide profile picture in basic API, use default
+            profileImage = `https://ui-avatars.com/api/?name=${username}&background=random`;
+          } catch (parseError) {
+            console.error('Error parsing Instagram response:', parseError);
+            throw new Error(`Failed to parse Instagram response: ${responseText}`);
+          }
+        } catch (fetchError) {
+          console.error('Instagram API fetch error:', fetchError);
+          throw new Error(`Instagram API request failed: ${fetchError.message}`);
         }
-        
-        accessToken = instaTokenData.access_token;
-        const userId = instaTokenData.user_id;
-        
-        console.log("Instagram access token obtained for user ID:", userId);
-        
-        // Get user profile with the long-lived token
-        const instaUserResponse = await fetch(`https://graph.instagram.com/v13.0/${userId}?fields=username,account_type&access_token=${accessToken}`);
-        profileData = await instaUserResponse.json();
-        
-        console.log("Instagram user profile:", profileData);
-        
-        if (profileData.error) {
-          console.error('Instagram profile error:', profileData);
-          throw new Error(profileData.error.message || 'Failed to get Instagram profile');
-        }
-        
-        username = profileData.username;
-        // Instagram doesn't provide profile picture in basic API, use default
-        profileImage = `https://ui-avatars.com/api/?name=${username}&background=random`;
         break;
         
       // Add more platforms as needed

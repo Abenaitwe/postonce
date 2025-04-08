@@ -1,6 +1,8 @@
 
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSocialAuth } from "@/hooks/use-social-auth";
 import { SocialPlatform } from "@/types/social-auth-types";
@@ -16,6 +18,7 @@ const ConnectedAccounts = () => {
   const { 
     accounts, 
     isLoading, 
+    error,
     connect, 
     disconnect, 
     handleCallback, 
@@ -26,24 +29,57 @@ const ConnectedAccounts = () => {
   const [session, setSession] = React.useState(null);
   const [authAlert, setAuthAlert] = React.useState(false);
   const { isReady, isLoggedIn, profile, login, logout } = useFacebookAuth();
+  const [callbackProcessed, setCallbackProcessed] = React.useState(false);
 
   useEffect(() => {
-    if (location.pathname === "/accounts/callback") {
+    if (location.pathname === "/accounts/callback" && !callbackProcessed) {
+      setCallbackProcessed(true); // Prevent multiple processing
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
       const state = params.get("state");
       const platform = localStorage.getItem("platform");
+      const error = params.get("error");
+      const errorReason = params.get("error_reason");
+      const errorDescription = params.get("error_description");
+      
+      // Check for error parameters in the callback
+      if (error || errorReason || errorDescription) {
+        console.error("OAuth error:", { error, errorReason, errorDescription });
+        toast({
+          title: "Connection Failed",
+          description: errorDescription || errorReason || error || "Authentication failed",
+          variant: "destructive"
+        });
+        
+        // Clean up stored data
+        localStorage.removeItem("platform");
+        localStorage.removeItem("oauth_state");
+        
+        // Navigate back to accounts page
+        navigate("/accounts");
+        return;
+      }
       
       if (code && platform) {
+        console.log(`Callback received for platform ${platform} with code ${code.substring(0, 10)}...`);
         handleCallback(platform as SocialPlatform, code);
         
         localStorage.removeItem("platform");
         localStorage.removeItem("oauth_state");
         
         navigate("/accounts");
+      } else {
+        console.error("Missing code or platform in callback");
+        toast({
+          title: "Connection Failed",
+          description: "Missing authentication data",
+          variant: "destructive"
+        });
+        
+        navigate("/accounts");
       }
     }
-  }, [location, handleCallback, navigate]);
+  }, [location, handleCallback, navigate, toast, callbackProcessed]);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -112,6 +148,16 @@ const ConnectedAccounts = () => {
     <div className="space-y-8">
       <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
         <h2 className="text-xl font-semibold mb-6">Connected Accounts</h2>
+        
+        {/* Display any errors */}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Connection Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <div className="space-y-6">
           {platformsList.map(platform => (
             <PlatformRow

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +25,11 @@ interface PlatformConfig {
 }
 
 const platforms: Record<string, PlatformConfig> = {
+  facebook: {
+    name: "Facebook",
+    icon: <Facebook className="h-6 w-6" />,
+    connectLabel: "Connect Facebook",
+  },
   instagram: {
     name: "Instagram",
     icon: <Instagram className="h-6 w-6" />,
@@ -93,14 +97,11 @@ const ConnectedAccounts = () => {
       const platform = localStorage.getItem("platform");
       
       if (code && platform) {
-        // Process the OAuth callback
         handleCallback(platform as any, code);
         
-        // Clean up storage
         localStorage.removeItem("platform");
         localStorage.removeItem("oauth_state");
         
-        // Redirect back to the accounts page
         navigate("/accounts");
       }
     }
@@ -121,7 +122,6 @@ const ConnectedAccounts = () => {
     
     checkSession();
     
-    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -148,13 +148,21 @@ const ConnectedAccounts = () => {
       return;
     }
     
-    // Store the platform in localStorage for callback handling
+    if (platform === 'facebook') {
+      login();
+      return;
+    }
+    
     localStorage.setItem("platform", platform);
     connect(platform as any);
   };
 
   const handleDisconnect = (accountId: string) => {
     disconnect(accountId);
+  };
+
+  const handleFacebookDisconnect = () => {
+    logout();
   };
 
   const platformsList = Object.keys(platforms);
@@ -173,96 +181,79 @@ const ConnectedAccounts = () => {
 
   return (
     <div className="space-y-8">
-      {/* Facebook Integration */}
       <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
-        <div className="flex items-center">
-          <div className="w-10 h-10 mr-4 flex items-center justify-center">
-            <Facebook className="h-6 w-6" />
-          </div>
-          
-          <div className="flex-1">
-            {isLoggedIn ? (
-              <div className="flex items-center gap-4">
-                <Avatar className="h-12 w-12">
-                  {profile?.picture?.data?.url && (
-                    <AvatarImage src={profile.picture.data.url} alt={profile.name} />
+        <h2 className="text-xl font-semibold mb-6">Connected Accounts</h2>
+        <div className="space-y-6">
+          {platformsList.map(platform => {
+            const isFacebook = platform === 'facebook';
+            const isConnected = isFacebook ? isLoggedIn : accounts.some(account => account.platform === platform);
+            
+            return (
+              <div key={platform} className="flex items-center">
+                <div className="w-10 h-10 mr-4 flex items-center justify-center">
+                  {platforms[platform].icon}
+                </div>
+                
+                <div className="flex-1">
+                  {(isFacebook && isLoggedIn) ? (
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-8 w-8">
+                        {profile?.picture?.data?.url && (
+                          <AvatarImage src={profile.picture.data.url} alt={profile.name} />
+                        )}
+                        <AvatarFallback>{profile?.name?.charAt(0) || 'FB'}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium text-sm">{profile?.name}</p>
+                        <Button 
+                          variant="outline" 
+                          className="mt-1 h-8 text-xs"
+                          onClick={handleFacebookDisconnect}
+                        >
+                          Disconnect
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant={isFacebook ? "default" : "outline"}
+                      className={isFacebook ? "bg-[#1877F2] text-white hover:bg-[#166FE5] px-4 py-2 rounded w-60" : "bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded w-60"}
+                      onClick={() => handleConnect(platform)}
+                      disabled={isLoading || (isFacebook && !isReady)}
+                    >
+                      {platforms[platform].connectLabel}
+                    </Button>
                   )}
-                  <AvatarFallback>{profile?.name?.charAt(0) || 'FB'}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{profile?.name}</p>
-                  <p className="text-sm text-gray-500">{profile?.email}</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-2"
-                    onClick={logout}
-                  >
-                    Disconnect Facebook
-                  </Button>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 ml-4">
+                  {!isFacebook && accounts
+                    .filter(account => account.platform === platform)
+                    .map(account => (
+                      <div 
+                        key={account.id}
+                        className="flex items-center gap-2 bg-gray-100 rounded-full pl-1 pr-2 py-1"
+                      >
+                        <Avatar className="h-7 w-7">
+                          <AvatarImage src={account.profileImage} />
+                          <AvatarFallback>
+                            {account.username.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{account.username}</span>
+                        <button 
+                          onClick={() => handleDisconnect(account.id)}
+                          className="ml-1 text-gray-500 hover:text-red-500"
+                          disabled={isLoading}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
                 </div>
               </div>
-            ) : (
-              <Button 
-                className="bg-[#1877F2] text-white hover:bg-[#166FE5] px-4 py-2 rounded w-60"
-                onClick={login}
-                disabled={!isReady}
-              >
-                <Facebook className="mr-2 h-5 w-5" />
-                Connect Facebook
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      {/* Regular OAuth Platform Connections */}
-      <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
-        <h2 className="text-xl font-semibold mb-6">OAuth Platform Connections</h2>
-        <div className="space-y-6">
-          {platformsList.map(platform => (
-            <div key={platform} className="flex items-center">
-              <div className="w-10 h-10 mr-4 flex items-center justify-center">
-                {platforms[platform].icon}
-              </div>
-              
-              <div className="flex-1">
-                <Button 
-                  variant="outline" 
-                  className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded w-60"
-                  onClick={() => handleConnect(platform)}
-                  disabled={isLoading}
-                >
-                  {platforms[platform].connectLabel}
-                </Button>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 ml-4">
-                {accounts
-                  .filter(account => account.platform === platform)
-                  .map(account => (
-                    <div 
-                      key={account.id}
-                      className="flex items-center gap-2 bg-gray-100 rounded-full pl-1 pr-2 py-1"
-                    >
-                      <Avatar className="h-7 w-7">
-                        <AvatarImage src={account.profileImage} />
-                        <AvatarFallback>
-                          {account.username.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">{account.username}</span>
-                      <button 
-                        onClick={() => handleDisconnect(account.id)}
-                        className="ml-1 text-gray-500 hover:text-red-500"
-                        disabled={isLoading}
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         
         <div className="flex justify-start gap-4 mt-8">

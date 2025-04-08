@@ -2,87 +2,14 @@
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { X, AlertCircle } from "lucide-react";
-import { 
-  Facebook, 
-  Instagram, 
-  Twitter, 
-  Linkedin, 
-  Youtube, 
-  Github,
-} from "lucide-react";
 import { useSocialAuth } from "@/hooks/use-social-auth";
 import { SocialPlatform } from "@/types/social-auth-types";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useFacebookAuth } from "@/hooks/use-facebook-auth";
-
-// Platform configuration
-interface PlatformConfig {
-  name: string;
-  icon: JSX.Element;
-  connectLabel: string;
-  buttonClass?: string;
-}
-
-const platforms: Record<string, PlatformConfig> = {
-  facebook: {
-    name: "Facebook",
-    icon: <Facebook className="h-6 w-6" />,
-    connectLabel: "Connect Facebook",
-    buttonClass: "bg-[#1877F2] text-white hover:bg-[#166FE5]"
-  },
-  instagram: {
-    name: "Instagram",
-    icon: <Instagram className="h-6 w-6" />,
-    connectLabel: "Connect Instagram",
-    buttonClass: "bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] text-white hover:opacity-90"
-  },
-  twitter: {
-    name: "Twitter",
-    icon: <Twitter className="h-6 w-6" />,
-    connectLabel: "Connect Twitter",
-    buttonClass: "bg-blue-500 text-white hover:bg-blue-600"
-  },
-  linkedin: {
-    name: "LinkedIn",
-    icon: <Linkedin className="h-6 w-6" />,
-    connectLabel: "Connect LinkedIn",
-    buttonClass: "bg-[#0077B5] text-white hover:bg-[#00689B]"
-  },
-  youtube: {
-    name: "Youtube",
-    icon: <Youtube className="h-6 w-6" />,
-    connectLabel: "Connect Youtube",
-    buttonClass: "bg-red-500 text-white hover:bg-red-600"
-  },
-  bluesky: {
-    name: "Bluesky",
-    icon: <Github className="h-6 w-6" />,
-    connectLabel: "Connect Bluesky",
-    buttonClass: "bg-[#1877F2] text-white hover:bg-[#166FE5]"
-  },
-  threads: {
-    name: "Threads",
-    icon: <Instagram className="h-6 w-6" />,
-    connectLabel: "Connect Threads",
-    buttonClass: "bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] text-white hover:opacity-90"
-  },
-  tiktok: {
-    name: "TikTok",
-    icon: <Github className="h-6 w-6" />,
-    connectLabel: "Connect TikTok",
-    buttonClass: "bg-[#1877F2] text-white hover:bg-[#166FE5]"
-  },
-  pinterest: {
-    name: "Pinterest",
-    icon: <Github className="h-6 w-6" />,
-    connectLabel: "Connect Pinterest",
-    buttonClass: "bg-[#1877F2] text-white hover:bg-[#166FE5]"
-  },
-};
+import AuthAlert from "./AuthAlert";
+import PlatformRow from "./PlatformRow";
+import { platforms } from "./PlatformConfigs";
 
 const ConnectedAccounts = () => {
   const { toast } = useToast();
@@ -116,7 +43,7 @@ const ConnectedAccounts = () => {
         navigate("/accounts");
       }
     }
-  }, [location]);
+  }, [location, handleCallback, navigate]);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -147,7 +74,7 @@ const ConnectedAccounts = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchConnectedAccounts]);
 
   const handleConnect = (platform: string) => {
     if (!session) {
@@ -178,15 +105,7 @@ const ConnectedAccounts = () => {
   const platformsList = Object.keys(platforms);
 
   if (authAlert) {
-    return (
-      <Alert variant="destructive" className="mb-6">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Authentication Required</AlertTitle>
-        <AlertDescription>
-          You need to be logged in to connect and manage social media accounts.
-        </AlertDescription>
-      </Alert>
-    );
+    return <AuthAlert />;
   }
 
   return (
@@ -194,78 +113,21 @@ const ConnectedAccounts = () => {
       <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
         <h2 className="text-xl font-semibold mb-6">Connected Accounts</h2>
         <div className="space-y-6">
-          {platformsList.map(platform => {
-            const isFacebook = platform === 'facebook';
-            const isConnected = isFacebook ? isLoggedIn : accounts.some(account => account.platform === platform);
-            
-            return (
-              <div key={platform} className="flex items-center">
-                <div className="w-10 h-10 mr-4 flex items-center justify-center">
-                  {platforms[platform].icon}
-                </div>
-                
-                <div className="flex-1">
-                  {(isFacebook && isLoggedIn) ? (
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-8 w-8">
-                        {profile?.picture?.data?.url && (
-                          <AvatarImage src={profile.picture.data.url} alt={profile.name} />
-                        )}
-                        <AvatarFallback>{profile?.name?.charAt(0) || 'FB'}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-sm">{profile?.name}</p>
-                        <Button 
-                          variant="outline" 
-                          className="mt-1 h-8 text-xs"
-                          onClick={handleFacebookDisconnect}
-                        >
-                          Disconnect
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Button 
-                      variant={isFacebook || platform === 'instagram' ? "default" : "outline"}
-                      className={platforms[platform].buttonClass ? 
-                        `${platforms[platform].buttonClass} px-4 py-2 rounded w-60` : 
-                        "bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded w-60"}
-                      onClick={() => handleConnect(platform)}
-                      disabled={isLoading || (isFacebook && !isReady)}
-                    >
-                      {platforms[platform].connectLabel}
-                    </Button>
-                  )}
-                </div>
-                
-                <div className="flex flex-wrap gap-2 ml-4">
-                  {!isFacebook && accounts
-                    .filter(account => account.platform === platform)
-                    .map(account => (
-                      <div 
-                        key={account.id}
-                        className="flex items-center gap-2 bg-gray-100 rounded-full pl-1 pr-2 py-1"
-                      >
-                        <Avatar className="h-7 w-7">
-                          <AvatarImage src={account.profileImage} />
-                          <AvatarFallback>
-                            {account.username.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium">{account.username}</span>
-                        <button 
-                          onClick={() => handleDisconnect(account.id)}
-                          className="ml-1 text-gray-500 hover:text-red-500"
-                          disabled={isLoading}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            );
-          })}
+          {platformsList.map(platform => (
+            <PlatformRow
+              key={platform}
+              platform={platform}
+              accounts={accounts}
+              isLoading={isLoading}
+              onConnect={handleConnect}
+              onDisconnect={handleDisconnect}
+              isFacebook={platform === 'facebook'}
+              isReady={isReady}
+              isLoggedIn={isLoggedIn}
+              facebookProfile={profile}
+              onFacebookDisconnect={handleFacebookDisconnect}
+            />
+          ))}
         </div>
         
         <div className="flex justify-start gap-4 mt-8">

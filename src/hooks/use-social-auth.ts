@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,14 +20,14 @@ const platformConfig: Record<SocialPlatform, {
   },
   facebook: {
     authUrl: 'https://www.facebook.com/v13.0/dialog/oauth',
-    clientId: import.meta.env.VITE_FACEBOOK_CLIENT_ID || '',
+    clientId: '1006135271061769',
     scope: 'public_profile,email',
     responseType: 'code',
   },
   instagram: {
-    authUrl: 'https://api.instagram.com/oauth/authorize',
-    clientId: import.meta.env.VITE_INSTAGRAM_CLIENT_ID || '',
-    scope: 'user_profile,user_media',
+    authUrl: 'https://www.instagram.com/oauth/authorize',
+    clientId: '1130965872361777',
+    scope: 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights',
     responseType: 'code',
   },
   linkedin: {
@@ -37,8 +36,6 @@ const platformConfig: Record<SocialPlatform, {
     scope: 'r_liteprofile r_emailaddress',
     responseType: 'code',
   },
-  // Placeholder configs for other platforms
-  // These would need to be properly configured with real client IDs
   bluesky: {
     authUrl: '',
     clientId: '',
@@ -159,6 +156,12 @@ export function useSocialAuth() {
         // For simplicity, we're using a fixed value here
         url.searchParams.append('code_challenge', 'challenge');
         url.searchParams.append('code_challenge_method', 'plain');
+      }
+      
+      // For Instagram, disable Facebook login and force authentication
+      if (platform === 'instagram') {
+        url.searchParams.append('enable_fb_login', '0');
+        url.searchParams.append('force_authentication', '1');
       }
       
       // Redirect to authorization URL

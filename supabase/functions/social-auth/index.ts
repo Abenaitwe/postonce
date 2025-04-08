@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0";
 
@@ -73,12 +72,12 @@ serve(async (req) => {
         break;
         
       case 'instagram':
-        // Instagram (Facebook) OAuth flow
-        const instagramClientId = Deno.env.get("INSTAGRAM_CLIENT_ID");
+        // Instagram OAuth flow
+        const instagramClientId = '1130965872361777';
         const instagramClientSecret = Deno.env.get("INSTAGRAM_CLIENT_SECRET");
         
-        if (!instagramClientId || !instagramClientSecret) {
-          throw new Error("Instagram credentials not configured");
+        if (!instagramClientSecret) {
+          throw new Error("Instagram client secret not configured");
         }
         
         // Exchange code for token
@@ -94,14 +93,26 @@ serve(async (req) => {
         });
         
         const instaTokenData = await tokenResponse.json();
+        
+        if (instaTokenData.error) {
+          console.error('Instagram token error:', instaTokenData);
+          throw new Error(instaTokenData.error_message || 'Failed to get Instagram token');
+        }
+        
         accessToken = instaTokenData.access_token;
         const userId = instaTokenData.user_id;
         
         // Get user profile
         const instaUserResponse = await fetch(`https://graph.instagram.com/v13.0/${userId}?fields=username,profile_picture&access_token=${accessToken}`);
         profileData = await instaUserResponse.json();
+        
+        if (profileData.error) {
+          console.error('Instagram profile error:', profileData);
+          throw new Error(profileData.error.message || 'Failed to get Instagram profile');
+        }
+        
         username = profileData.username;
-        profileImage = profileData.profile_picture;
+        profileImage = profileData.profile_picture || 'https://www.instagram.com/static/images/ico/favicon.ico/36b3ee2d91ed.ico';
         break;
         
       // Add more platforms as needed
